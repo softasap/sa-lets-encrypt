@@ -37,7 +37,7 @@
       - letsencrypt
 
   - name: Lets Encrypt | Patch Nginx config in {{item.nginx_config}}
-    lineinfile: dest="{{item.nginx_config}}" regexp="^(\s*)\s*location /\.well-known/acme-challenge(.*)" line="\1location /.well-known/acme-challenge/ { alias {{le_install_dir}}/.acme-challenges/; }" backrefs=yes insertafter="^(\s*)\s*server_name"
+    lineinfile: dest="{{item.nginx_config}}" regexp="^(\s*)\s*location /\.well-known/acme-challenge(.*)" line="    location /.well-known/acme-challenge/ { alias {{le_install_dir}}/.acme-challenges/; }" insertafter="^(\s*)\s*server_name"
     when: item.nginx_config is defined
     with_items: "{{le_domains | default([])}}"
     become: yes

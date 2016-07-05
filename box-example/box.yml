@@ -16,7 +16,10 @@
         include_file: "{{root_dir}}/demosite.yml"
       }
     - {
-        role: "sa-lets-encrypt"
+        role: "sa-lets-encrypt",
+        le_ca: https://acme-staging.api.letsencrypt.org/directory,
+        option_run_once: true,
+        option_setup_cron: true
       }
 
 

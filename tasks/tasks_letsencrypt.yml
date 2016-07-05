@@ -44,6 +44,15 @@
     tags:
       - letsencrypt
 
+  - name: Lets Encrypt | Force generate certificates
+    shell: "./letsencrypt.sh --cron --force"
+    args:
+      chdir: "{{le_install_dir}}"
+    become: yes
+    become_user: le
+    when: option_run_once
+    tags:
+      - letsencrypt
 
   - name: Lets Encrypt | Setup cron
     cron: name="lets encrypt crone" minute="0" hour="1" job="/opt/letsencrypt/letsencrypt.sh --cron  > {{le_install_dir}}/cron.log"

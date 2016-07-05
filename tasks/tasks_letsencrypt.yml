@@ -44,6 +44,20 @@
     tags:
       - letsencrypt
 
+  - name: Lets Encrypt | Nginx | Check if is present
+    command: test -x /usr/sbin/nginx
+    ignore_errors: yes
+    register: nginx_present
+    tags:
+      - letsencrypt
+
+  - name: Lets Encrypt | Nginx | Restart
+    service: name="nginx" state=restarted
+    become: yes
+    when: nginx_present
+    tags:
+      - letsencrypt
+
   - name: Lets Encrypt | Force generate certificates
     shell: "./letsencrypt.sh --cron --force"
     args:

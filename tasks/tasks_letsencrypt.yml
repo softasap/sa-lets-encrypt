@@ -1,0 +1,54 @@
+---
+  - name: Lets Encrypt | Create user
+    user: name=le shell=/bin/bash system=yes home="{{le_install_dir}}"
+    become: yes
+    tags:
+      - letsencrypt
+
+  - name: Lets Encrypt | Create letsencrypt directory
+    file: path="{{le_install_dir}}" owner="le"
+    become: yes
+    tags:
+      - letsencrypt
+
+  - name: Lets Encrypt | Create letsencrypt .acme-challenges  directory
+    file: path="{{le_install_dir}}/.acme-challenges" owner="le"
+    become: yes
+    tags:
+      - letsencrypt
+
+
+  - name: Lets Encrypt | Template letsencrypt.sh
+    template: src="{{role_path}}/templates/letsencrypt.sh.j2" dest="{{le_install_dir}}/letsencrypt.sh" owner=le group=wheel mode="u=rwx,g=rwx,o=r"
+    become: yes
+    tags:
+      - letsencrypt
+
+  - name: Lets Encrypt | Template config
+    template: src="{{role_path}}/templates/config.j2" dest="{{le_install_dir}}/config" owner=le group=wheel mode="u=rw,g=rw,o=r"
+    become: yes
+    tags:
+      - letsencrypt
+
+  - name: Lets Encrypt | Template domains
+    template: src="{{role_path}}/templates/domains.txt.j2" dest="{{le_install_dir}}/domains.txt" owner=le group=wheel mode="u=rw,g=rw,o=r"
+    become: yes
+    tags:
+      - letsencrypt
+
+  - name: Lets Encrypt | Patch Nginx config
+    lineinfile: dest="{{item.nginx_config}}" regexp="^(\s*)\s*location /\.well-known/acme-challenge(.*)" line="\1location /.well-known/acme-challenge/ { alias {{le_install_dir}}/.acme-challenges/; }" backrefs=yes insertafter="^(\s*)\s*server_name"
+    when: item.nginx_config is defined
+    with_items: "{{le_domains}} | default([])"
+    become: yes
+    tags:
+      - letsencrypt
+
+
+  - name: Lets Encrypt | Setup cron
+    cron: name="lets encrypt crone" minute="0" hour="1" job="/opt/letsencrypt/letsencrypt.sh --cron  > {{le_install_dir}}/cron.log"
+    become: yes
+    become_user: le
+    when: option_setup_cron
+    tags:
+      - letsencrypt

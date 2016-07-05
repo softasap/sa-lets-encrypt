@@ -1,0 +1,13 @@
+---
+# defaults file for sa-lets-encrypt
+  le_install_dir: /opt/letsencrypt/
+  le_ca: https://acme-staging.api.letsencrypt.org/directory #
+
+  option_setup_cron: true
+  option_run_once: true
+
+  le_domains:
+    - {
+      names: "voronenko.net www.voronenko.net",
+      nginx_config: "/etc/nginx/sites-available/voronenko_net"
+      }

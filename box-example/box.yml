@@ -1,0 +1,19 @@
+---
+- hosts: www
+
+  vars:
+    - root_dir: "{{playbook_dir}}/../"
+
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+
+  roles:
+
+    - {
+        role: "sa-lets-encrypt"
+      }
+
+
+  tasks:
+    - debug: msg="Tasks section"

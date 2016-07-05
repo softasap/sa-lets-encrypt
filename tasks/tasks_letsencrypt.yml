@@ -19,7 +19,7 @@
 
 
   - name: Lets Encrypt | Template letsencrypt.sh
-    template: src="{{role_path}}/templates/letsencrypt.sh.j2" dest="{{le_install_dir}}/letsencrypt.sh" owner=le group=root mode="u=rwx,g=rwx,o=r"
+    copy: src="{{role_path}}/templates/letsencrypt.sh.j2" dest="{{le_install_dir}}/letsencrypt.sh" owner=le group=root mode="u=rwx,g=rwx,o=r"
     become: yes
     tags:
       - letsencrypt

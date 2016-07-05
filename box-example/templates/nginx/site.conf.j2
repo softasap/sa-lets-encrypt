@@ -1,0 +1,9 @@
+server {
+    listen 80 default_server;
+    server_name voronenko.net www.voronenko.net;
+
+    location / {
+         default_type text/plain;
+         return 200 "scheme: $scheme";
+    }
+}

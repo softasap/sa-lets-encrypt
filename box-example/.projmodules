@@ -1,4 +1,10 @@
 [submodule "roles/sa-lets-encrypt"]
         path = roles/sa-lets-encrypt
         url = https://github.com/softasap/sa-lets-encrypt.git
+[submodule "roles/sa-include"]
+        path = roles/sa-include
+        url = https://github.com/softasap/sa-include.git
+[submodule "roles/sa-nginx"]
+        path = roles/sa-nginx
+        url = https://github.com/softasap/sa-nginx.git
 

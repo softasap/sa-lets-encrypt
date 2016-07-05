@@ -1,0 +1,23 @@
+---
+  - name: Nginx | configure web startup
+    template: src="{{root_dir}}/templates/nginx/site.conf.j2" dest="/etc/nginx/sites-available/voronenko_net"
+    become: yes
+    tags:
+      - create
+      - update
+
+
+  - name: Nginx | Enable sites
+    command: ln -fs /etc/nginx/sites-available/voronenko_net /etc/nginx/sites-enabled/voronenko_net creates=/etc/nginx/sites-enabled/voronenko_net
+    become: yes
+    tags:
+      - create
+      - update
+
+  - name: Nginx | Restart
+    service: name="nginx" state=restarted
+    become: yes
+    tags:
+      - create
+      - update
+

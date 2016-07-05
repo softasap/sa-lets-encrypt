@@ -1,15 +1,20 @@
 ---
 - hosts: www
-
   vars:
-    - root_dir: "{{playbook_dir}}/../"
-
+    - root_dir: "{{playbook_dir}}"
 
   pre_tasks:
     - debug: msg="Pre tasks section"
 
   roles:
 
+    - {
+        role: "sa-nginx"
+      }
+    - {
+        role: "sa-include",
+        include_file: "{{root_dir}}/demosite.yml"
+      }
     - {
         role: "sa-lets-encrypt"
       }

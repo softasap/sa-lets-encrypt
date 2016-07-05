@@ -17,7 +17,7 @@
       }
     - {
         role: "sa-lets-encrypt",
-        le_ca: https://acme-staging.api.letsencrypt.org/directory,
+        le_ca: "https://acme-staging.api.letsencrypt.org/directory",
         option_run_once: true,
         option_setup_cron: true
       }

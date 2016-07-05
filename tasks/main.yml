@@ -1,2 +1,3 @@
 ---
 # tasks file for sa-lets-encrypt
+  - include: tasks_lets_encrypt.yml

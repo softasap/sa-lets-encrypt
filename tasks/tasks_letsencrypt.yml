@@ -6,32 +6,32 @@
       - letsencrypt
 
   - name: Lets Encrypt | Create letsencrypt directory
-    file: path="{{le_install_dir}}" owner="le"
+    file: path="{{le_install_dir}}" owner="le" state="directory"
     become: yes
     tags:
       - letsencrypt
 
   - name: Lets Encrypt | Create letsencrypt .acme-challenges  directory
-    file: path="{{le_install_dir}}/.acme-challenges" owner="le"
+    file: path="{{le_install_dir}}/.acme-challenges" owner="le" state="directory"
     become: yes
     tags:
       - letsencrypt
 
 
   - name: Lets Encrypt | Template letsencrypt.sh
-    template: src="{{role_path}}/templates/letsencrypt.sh.j2" dest="{{le_install_dir}}/letsencrypt.sh" owner=le group=wheel mode="u=rwx,g=rwx,o=r"
+    template: src="{{role_path}}/templates/letsencrypt.sh.j2" dest="{{le_install_dir}}/letsencrypt.sh" owner=le group=root mode="u=rwx,g=rwx,o=r"
     become: yes
     tags:
       - letsencrypt
 
   - name: Lets Encrypt | Template config
-    template: src="{{role_path}}/templates/config.j2" dest="{{le_install_dir}}/config" owner=le group=wheel mode="u=rw,g=rw,o=r"
+    template: src="{{role_path}}/templates/config.j2" dest="{{le_install_dir}}/config" owner=le group=root mode="u=rw,g=rw,o=r"
     become: yes
     tags:
       - letsencrypt
 
   - name: Lets Encrypt | Template domains
-    template: src="{{role_path}}/templates/domains.txt.j2" dest="{{le_install_dir}}/domains.txt" owner=le group=wheel mode="u=rw,g=rw,o=r"
+    template: src="{{role_path}}/templates/domains.txt.j2" dest="{{le_install_dir}}/domains.txt" owner=le group=root mode="u=rw,g=rw,o=r"
     become: yes
     tags:
       - letsencrypt

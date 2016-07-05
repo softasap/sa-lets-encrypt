@@ -81,23 +81,23 @@ Advanced example:
 
 
 
-    See standalone example in box-example folder.
+See standalone example in box-example folder.
 
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/1.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/1.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/2.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/2.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/3.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/3.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/4.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/4.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/5.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/5.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/6.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/6.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/7.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/7.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/8.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/8.png)
 
-    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/9.png)
+![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/9.png)

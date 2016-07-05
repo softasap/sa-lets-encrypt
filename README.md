@@ -7,7 +7,19 @@ Is based on beautiful script https://github.com/lukas2511/letsencrypt.sh
 
 Example of use:
 
+
+<pre>
+
 - hosts: dev
+
+  vars:
+    - root_dir: "{{playbook_dir}}"
+    - my_domains:
+      - {
+        names: "voronenko.net www.voronenko.net",
+        nginx_config: "/etc/nginx/sites-available/voronenko_net"
+        }
+
 
   pre_tasks:
     - debug: msg="Pre tasks section"
@@ -15,13 +27,77 @@ Example of use:
   roles:
 
     - {
-        role: "sa-lets-encrypt"
+        role: "sa-lets-encrypt",
+        le_domains: "{{my_domains}}",
+        option_run_once: true,
+        option_setup_cron: true
       }
 
 
   tasks:
     - debug: msg="Tasks section"
 
+</pre>
+
+Advanced example:
+
+<pre>
+
+---
+- hosts: www
+  vars:
+    - root_dir: "{{playbook_dir}}"
+    - my_domains:
+      - {
+        names: "voronenko.net www.voronenko.net",
+        nginx_config: "/etc/nginx/sites-available/voronenko_net"
+        }
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+
+  roles:
+
+    - {
+        role: "sa-nginx"
+      }
+    - {
+        role: "sa-include",
+        include_file: "{{root_dir}}/demosite.yml"
+      }
+    - {
+        role: "sa-lets-encrypt",
+        le_domains: "{{my_domains}}",
+#        le_ca: "https://acme-staging.api.letsencrypt.org/directory",
+        option_run_once: true,
+        option_setup_cron: true
+      }
 
 
-Possible overrides:
+  tasks:
+    - debug: msg="Tasks section"
+
+</pre>
+
+
+
+    See standalone example in box-example folder.
+
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/1.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/2.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/3.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/4.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/5.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/6.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/7.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/8.png)
+
+    ![](https://raw.github.com/softasap/sa-lets-encrypt/master/box-example/docs/9.png)

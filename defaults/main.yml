@@ -11,3 +11,5 @@
       names: "voronenko.net www.voronenko.net",
       nginx_config: "/etc/nginx/sites-available/voronenko_net"
       }
+
+  #le_cron_expression: 0 1 1 * *  # every first day of the every month

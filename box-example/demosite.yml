@@ -1,6 +1,6 @@
 ---
   - name: Nginx | configure web startup
-    template: src="{{root_dir}}/templates/nginx/site.conf.j2" dest="/etc/nginx/sites-available/voronenko_net"
+    template: src="{{root_dir}}/templates/nginx/site.conf.j2" dest="/etc/nginx/sites-available/letsencrypt_site_to_validate"
     become: yes
     tags:
       - create
@@ -8,7 +8,7 @@
 
 
   - name: Nginx | Enable sites
-    command: ln -fs /etc/nginx/sites-available/voronenko_net /etc/nginx/sites-enabled/voronenko_net creates=/etc/nginx/sites-enabled/voronenko_net
+    command: ln -fs /etc/nginx/sites-available/lets_apito /etc/nginx/sites-enabled/letsencrypt_site_to_validate creates=/etc/nginx/sites-enabled/letsencrypt_site_to_validate
     become: yes
     tags:
       - create
@@ -20,4 +20,3 @@
     tags:
       - create
       - update
-

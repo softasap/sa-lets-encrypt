@@ -58,6 +58,7 @@ store_configvars() {
   __HOOK_CHAIN="${HOOK_CHAIN}"
   __OPENSSL_CNF="${OPENSSL_CNF}"
   __RENEW_DAYS="${RENEW_DAYS}"
+  __IP_VERSION="${IP_VERSION}"
 }
 
 reset_configvars() {
@@ -71,6 +72,7 @@ reset_configvars() {
   HOOK_CHAIN="${__HOOK_CHAIN}"
   OPENSSL_CNF="${__OPENSSL_CNF}"
   RENEW_DAYS="${__RENEW_DAYS}"
+  IP_VERSION="${__IP_VERSION}"
 }
 
 # verify configuration values
@@ -83,6 +85,9 @@ verify_config() {
     _exiterr "WELLKNOWN directory doesn't exist, please create ${WELLKNOWN} and set appropriate permissions."
   fi
   [[ "${KEY_ALGO}" =~ ^(rsa|prime256v1|secp384r1)$ ]] || _exiterr "Unknown public key algorithm ${KEY_ALGO}... can not continue."
+  if [[ -n "${IP_VERSION}" ]]; then
+    [[ "${IP_VERSION}" = "4" || "${IP_VERSION}" = "6" ]] || _exiterr "Unknown IP version ${IP_VERSION}... can not continue."
+  fi
 }
 
 # Setup default config values, search for and load configuration files
@@ -100,11 +105,12 @@ load_config() {
 
   # Default values
   CA="https://acme-v01.api.letsencrypt.org/directory"
-  LICENSE="https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf"
+  LICENSE="https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf"
   CERTDIR=
   ACCOUNTDIR=
   CHALLENGETYPE="http-01"
   CONFIG_D=
+  DOMAINS_D=
   DOMAINS_TXT=
   HOOK=
   HOOK_CHAIN="no"
@@ -117,6 +123,7 @@ load_config() {
   CONTACT_EMAIL=
   LOCKFILE=
   OCSP_MUST_STAPLE="no"
+  IP_VERSION=
 
   if [[ -z "${CONFIG:-}" ]]; then
     echo "#" >&2
@@ -174,14 +181,16 @@ load_config() {
 
   [[ -z "${CERTDIR}" ]] && CERTDIR="${BASEDIR}/certs"
   [[ -z "${DOMAINS_TXT}" ]] && DOMAINS_TXT="${BASEDIR}/domains.txt"
-  [[ -z "${WELLKNOWN}" ]] && WELLKNOWN="${BASEDIR}/.acme-challenges"
+  [[ -z "${WELLKNOWN}" ]] && WELLKNOWN="/var/www/letsencrypt"
   [[ -z "${LOCKFILE}" ]] && LOCKFILE="${BASEDIR}/lock"
+  [[ -n "${PARAM_NO_LOCK:-}" ]] && LOCKFILE=""
 
   [[ -n "${PARAM_HOOK:-}" ]] && HOOK="${PARAM_HOOK}"
   [[ -n "${PARAM_CERTDIR:-}" ]] && CERTDIR="${PARAM_CERTDIR}"
   [[ -n "${PARAM_CHALLENGETYPE:-}" ]] && CHALLENGETYPE="${PARAM_CHALLENGETYPE}"
   [[ -n "${PARAM_KEY_ALGO:-}" ]] && KEY_ALGO="${PARAM_KEY_ALGO}"
   [[ -n "${PARAM_OCSP_MUST_STAPLE:-}" ]] && OCSP_MUST_STAPLE="${PARAM_OCSP_MUST_STAPLE}"
+  [[ -n "${PARAM_IP_VERSION:-}" ]] && IP_VERSION="${PARAM_IP_VERSION}"
 
   verify_config
   store_configvars
@@ -192,11 +201,13 @@ init_system() {
   load_config
 
   # Lockfile handling (prevents concurrent access)
-  LOCKDIR="$(dirname "${LOCKFILE}")"
-  [[ -w "${LOCKDIR}" ]] || _exiterr "Directory ${LOCKDIR} for LOCKFILE ${LOCKFILE} is not writable, aborting."
-  ( set -C; date > "${LOCKFILE}" ) 2>/dev/null || _exiterr "Lock file '${LOCKFILE}' present, aborting."
-  remove_lock() { rm -f "${LOCKFILE}"; }
-  trap 'remove_lock' EXIT
+  if [[ -n "${LOCKFILE}" ]]; then
+    LOCKDIR="$(dirname "${LOCKFILE}")"
+    [[ -w "${LOCKDIR}" ]] || _exiterr "Directory ${LOCKDIR} for LOCKFILE ${LOCKFILE} is not writable, aborting."
+    ( set -C; date > "${LOCKFILE}" ) 2>/dev/null || _exiterr "Lock file '${LOCKFILE}' present, aborting."
+    remove_lock() { rm -f "${LOCKFILE}"; }
+    trap 'remove_lock' EXIT
+  fi
 
   # Get CA URLs
   CA_DIRECTORY="$(http_request get "${CA}")"
@@ -315,15 +326,19 @@ _openssl() {
 http_request() {
   tempcont="$(_mktemp)"
 
+  if [[ -n "${IP_VERSION:-}" ]]; then
+      ip_version="-${IP_VERSION}"
+  fi
+
   set +e
   if [[ "${1}" = "head" ]]; then
-    statuscode="$(curl -s -w "%{http_code}" -o "${tempcont}" "${2}" -I)"
+    statuscode="$(curl ${ip_version:-} -s -w "%{http_code}" -o "${tempcont}" "${2}" -I)"
     curlret="${?}"
   elif [[ "${1}" = "get" ]]; then
-    statuscode="$(curl -s -w "%{http_code}" -o "${tempcont}" "${2}")"
+    statuscode="$(curl ${ip_version:-} -s -w "%{http_code}" -o "${tempcont}" "${2}")"
     curlret="${?}"
   elif [[ "${1}" = "post" ]]; then
-    statuscode="$(curl -s -w "%{http_code}" -o "${tempcont}" "${2}" -d "${3}")"
+    statuscode="$(curl ${ip_version:-} -s -w "%{http_code}" -o "${tempcont}" "${2}" -d "${3}")"
     curlret="${?}"
   else
     set -e
@@ -340,6 +355,8 @@ http_request() {
     echo >&2
     echo "Details:" >&2
     cat "${tempcont}" >&2
+    echo >&2
+    echo >&2
     rm -f "${tempcont}"
 
     # Wait for hook script to clean the challenge if used
@@ -664,7 +681,13 @@ command_sign_domains() {
     # for now this loads the certificate specific config in a subshell and parses a diff of set variables.
     # we could just source the config file but i decided to go this way to protect people from accidentally overriding
     # variables used internally by this script itself.
-    if [ -f "${CERTDIR}/${domain}/config" ]; then
+    if [[ -n "${DOMAINS_D}" ]]; then
+      certconfig="${DOMAINS_D}/${domain}"
+    else
+      certconfig="${CERTDIR}/${domain}/config"
+    fi
+
+    if [ -f "${certconfig}" ]; then
       echo " + Using certificate specific config file!"
       ORIGIFS="${IFS}"
       IFS=$'\n'
@@ -673,7 +696,7 @@ command_sign_domains() {
         aftervars="$(_mktemp)"
         set > "${beforevars}"
         # shellcheck disable=SC1090
-        . "${CERTDIR}/${domain}/config"
+        . "${certconfig}"
         set > "${aftervars}"
         diff -u "${beforevars}" "${aftervars}" | grep -E '^\+[^+]'
         rm "${beforevars}"
@@ -733,7 +756,12 @@ command_sign_domains() {
     fi
 
     # shellcheck disable=SC2086
-    sign_domain ${line}
+    if [[ "${PARAM_KEEP_GOING:-}" = "yes" ]]; then
+      sign_domain ${line} &
+      wait $! || true
+    else
+      sign_domain ${line}
+    fi
   done
 
   # remove temporary domains.txt file if used
@@ -760,24 +788,29 @@ command_sign_csr() {
   certfile="$(_mktemp)"
   sign_csr "$(< "${csrfile}" )" 3> "${certfile}"
 
-  # get and convert ca cert
-  chainfile="$(_mktemp)"
-  http_request get "$(openssl x509 -in "${certfile}" -noout -text | grep 'CA Issuers - URI:' | cut -d':' -f2-)" > "${chainfile}"
-
-  if ! grep -q "BEGIN CERTIFICATE" "${chainfile}"; then
-    openssl x509 -inform DER -in "${chainfile}" -outform PEM -out "${chainfile}"
-  fi
-
-  # output full chain
+  # print cert
   echo "# CERT #" >&3
   cat "${certfile}" >&3
   echo >&3
-  echo "# CHAIN #" >&3
-  cat "${chainfile}" >&3
+
+  # print chain
+  if [ -n "${PARAM_FULL_CHAIN:-}" ]; then
+    # get and convert ca cert
+    chainfile="$(_mktemp)"
+    http_request get "$(openssl x509 -in "${certfile}" -noout -text | grep 'CA Issuers - URI:' | cut -d':' -f2-)" > "${chainfile}"
+
+    if ! grep -q "BEGIN CERTIFICATE" "${chainfile}"; then
+      openssl x509 -inform DER -in "${chainfile}" -outform PEM -out "${chainfile}"
+    fi
+
+    echo "# CHAIN #" >&3
+    cat "${chainfile}" >&3
+
+    rm "${chainfile}"
+  fi
 
   # cleanup
   rm "${certfile}"
-  rm "${chainfile}"
 
   exit 0
 }
@@ -893,7 +926,7 @@ command_help() {
 command_env() {
   echo "# letsencrypt.sh configuration"
   load_config
-  typeset -p CA LICENSE CERTDIR CHALLENGETYPE DOMAINS_TXT HOOK HOOK_CHAIN RENEW_DAYS ACCOUNT_KEY ACCOUNT_KEY_JSON KEYSIZE WELLKNOWN PRIVATE_KEY_RENEW OPENSSL_CNF CONTACT_EMAIL LOCKFILE
+  typeset -p CA LICENSE CERTDIR CHALLENGETYPE DOMAINS_D DOMAINS_TXT HOOK HOOK_CHAIN RENEW_DAYS ACCOUNT_KEY ACCOUNT_KEY_JSON KEYSIZE WELLKNOWN PRIVATE_KEY_RENEW OPENSSL_CNF CONTACT_EMAIL LOCKFILE
 }
 
 # Main method (parses script arguments and calls command_* methods)
@@ -950,6 +983,24 @@ main() {
         set_command cleanup
         ;;
 
+      # PARAM_Usage: --full-chain (-fc)
+      # PARAM_Description: Print full chain when using --signcsr
+      --full-chain|-fc)
+        PARAM_FULL_CHAIN="1"
+        ;;
+
+      # PARAM_Usage: --ipv4 (-4)
+      # PARAM_Description: Resolve names to IPv4 addresses only
+      --ipv4|-4)
+        PARAM_IP_VERSION="4"
+        ;;
+
+      # PARAM_Usage: --ipv6 (-6)
+      # PARAM_Description: Resolve names to IPv6 addresses only
+      --ipv6|-6)
+        PARAM_IP_VERSION="6"
+        ;;
+
       # PARAM_Usage: --domain (-d) domain.tld
       # PARAM_Description: Use specified domain name(s) instead of domains.txt entry (one certificate!)
       --domain|-d)
@@ -962,11 +1013,22 @@ main() {
          fi
         ;;
 
+      # PARAM_Usage: --keep-going (-g)
+      # PARAM_Description: Keep going after encountering an error while creating/renewing multiple certificates in cron mode
+      --keep-going|-g)
+        PARAM_KEEP_GOING="yes"
+        ;;
 
       # PARAM_Usage: --force (-x)
       # PARAM_Description: Force renew of certificate even if it is longer valid than value in RENEW_DAYS
       --force|-x)
         PARAM_FORCE="yes"
+        ;;
+
+      # PARAM_Usage: --no-lock (-n)
+      # PARAM_Description: Don't use lockfile (potentially dangerous!)
+      --no-lock|-n)
+        PARAM_NO_LOCK="yes"
         ;;
 
       # PARAM_Usage: --ocsp

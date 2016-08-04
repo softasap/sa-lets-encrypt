@@ -5,14 +5,13 @@
     - my_domains:
       - {
         names: "voronenko.net www.voronenko.net",
-        nginx_config: "/etc/nginx/sites-available/voronenko_net"
+        nginx_config: "/etc/nginx/sites-available/letsencrypt_site_to_validate"
         }
 
   pre_tasks:
     - debug: msg="Pre tasks section"
 
   roles:
-
     - {
         role: "sa-nginx"
       }

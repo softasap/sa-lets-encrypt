@@ -1,4 +1,13 @@
 ---
+
+  - name: Lets Encrypt | Install dependencies
+    apt: pkg="{{item}}"
+    with_items:
+      - curl
+    become: yes
+    tags:
+      - letsencrypt
+
   - name: Lets Encrypt | Create user
     user: name=le shell=/bin/bash system=yes home="{{le_install_dir}}"
     become: yes

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 brew install git
 brew install python
 pip install -U pip

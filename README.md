@@ -7,6 +7,7 @@ This role is based on beautiful script https://github.com/lukas2511/dehydrated
 
 Basic usage example:
 <pre>
+---
 - hosts: dev
 
   vars:

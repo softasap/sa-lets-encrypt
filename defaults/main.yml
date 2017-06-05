@@ -1,15 +1,19 @@
 ---
-# defaults file for sa-lets-encrypt
-  le_install_dir: /opt/letsencrypt/
-  # le_ca: https://acme-staging.api.letsencrypt.org/directory # set this one for test
+  ### Defaults file for sa-lets-encrypt
 
+  # Installation directory
+  le_install_dir: "/opt/letsencrypt/"
+  # Let's Encrypt CA URL
+  #le_ca:         "https://acme-staging.api.letsencrypt.org/directory"
+
+  # Setup crob job
   option_setup_cron: true
-  option_run_once: true
+  # Force certificates generation
+  option_run_once:   true
 
+  # Domain list
   le_domains:
     - {
-      names: "voronenko.net www.voronenko.net",
-      nginx_config: "/etc/nginx/sites-available/voronenko_net"
+        names: "voronenko.net www.voronenko.net",
+        nginx_config: "/etc/nginx/sites-available/voronenko_net"
       }
-
-  #le_cron_expression: 0 1 1 * *  # every first day of the every month

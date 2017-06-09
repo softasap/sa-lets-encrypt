@@ -1,21 +1,24 @@
 ---
   - name: Nginx | configure web startup
-    template: src="{{root_dir}}/templates/nginx/site.conf.j2" dest="/etc/nginx/sites-available/letsencrypt_site_to_validate"
+    template:
+      src:  "{{ root_dir }}/templates/nginx/site.conf.j2"
+      dest: "/etc/nginx/sites-available/letsencrypt_site_to_validate"
     become: yes
     tags:
       - create
       - update
 
-
   - name: Nginx | Enable sites
-    command: ln -fs /etc/nginx/sites-available/lets_apito /etc/nginx/sites-enabled/letsencrypt_site_to_validate creates=/etc/nginx/sites-enabled/letsencrypt_site_to_validate
+    command: "ln -fs /etc/nginx/sites-available/lets_apito /etc/nginx/sites-enabled/letsencrypt_site_to_validate creates=/etc/nginx/sites-enabled/letsencrypt_site_to_validate"
     become: yes
     tags:
       - create
       - update
 
   - name: Nginx | Restart
-    service: name="nginx" state=restarted
+    service:
+      name:  "nginx"
+      state: restarted
     become: yes
     tags:
       - create

@@ -1,11 +1,12 @@
 ---
 - hosts: www
+
   vars:
-    - root_dir: "{{playbook_dir}}"
+    - root_dir: "{{ playbook_dir }}"
     - my_domains:
       - {
-        names: "voronenko.net www.voronenko.net",
-        nginx_config: "/etc/nginx/sites-available/letsencrypt_site_to_validate"
+          names:        "voronenko.net www.voronenko.net",
+          nginx_config: "/etc/nginx/sites-available/letsencrypt_site_to_validate"
         }
 
   pre_tasks:
@@ -16,17 +17,16 @@
         role: "sa-nginx"
       }
     - {
-        role: "sa-include",
-        include_file: "{{root_dir}}/demosite.yml"
+        role:         "sa-include",
+        include_file: "{{ root_dir }}/demosite.yml"
       }
     - {
-        role: "sa-lets-encrypt",
-        le_domains: "{{my_domains}}",
-#        le_ca: "https://acme-staging.api.letsencrypt.org/directory",
-        option_run_once: true,
-        option_setup_cron: true
+        role:              "sa-lets-encrypt",
+        le_domains:        "{{ my_domains }}",
+        #le_ca:            "https://acme-staging.api.letsencrypt.org/directory",
+        option_run_once:   True,
+        option_setup_cron: True
       }
-
 
   tasks:
     - debug: msg="Tasks section"

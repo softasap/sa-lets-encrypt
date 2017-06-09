@@ -1,54 +1,62 @@
 ---
-
   - name: Lets Encrypt | Install dependencies
-    apt: pkg="{{item}}"
+    apt:
+      pkg: "{{ item }}"
     with_items:
       - curl
     become: yes
     tags:
       - letsencrypt
 
-  - name: Lets Encrypt | Create user
-    user: name=le shell=/bin/bash system=yes home="{{le_install_dir}}"
+  - name: Lets Encrypt | Create user and home directory
+    user:
+      name:       "le"
+      shell:      "/bin/bash"
+      system:     "yes"
+      home:       "{{ le_install_dir }}"
+      createhome: True
     become: yes
     tags:
       - letsencrypt
 
-  - name: Lets Encrypt | Create letsencrypt directory
-    file: path="{{le_install_dir}}" owner="le" state="directory"
+  - name: Lets Encrypt | Create letsencrypt '.acme-challenges'  directory
+    file:
+      path:  "{{ le_install_dir }}/.acme-challenges"
+      owner: "le"
+      state: "directory"
     become: yes
     tags:
       - letsencrypt
 
-  - name: Lets Encrypt | Create letsencrypt .acme-challenges  directory
-    file: path="{{le_install_dir}}/.acme-challenges" owner="le" state="directory"
+  - name: Lets Encrypt | Copy dehydrated
+    copy:
+      src:   "files/dehydrated"
+      dest:  "{{ le_install_dir }}/dehydrated"
+      owner: "le"
+      group: "root"
+      mode:  "0771"
     become: yes
     tags:
       - letsencrypt
 
-
-  - name: Lets Encrypt | Template letsencrypt.sh
-    copy: src="{{role_path}}/templates/letsencrypt.sh" dest="{{le_install_dir}}/letsencrypt.sh" owner=le group=root mode="u=rwx,g=rwx,o=r"
+  - name: Lets Encrypt | Copy configuration items
+    template:
+      src:   "templates/{{ item }}.j2"
+      dest:  "{{ le_install_dir }}/{{ item }}"
+      owner: "le"
+      group: "root"
+      mode:  "0664"
     become: yes
+    with_items:
+      - "config"
+      - "domains.txt"
     tags:
       - letsencrypt
 
-  - name: Lets Encrypt | Template config
-    template: src="{{role_path}}/templates/config.j2" dest="{{le_install_dir}}/config" owner=le group=root mode="u=rw,g=rw,o=r"
-    become: yes
-    tags:
-      - letsencrypt
-
-  - name: Lets Encrypt | Template domains
-    template: src="{{role_path}}/templates/domains.txt.j2" dest="{{le_install_dir}}/domains.txt" owner=le group=root mode="u=rw,g=rw,o=r"
-    become: yes
-    tags:
-      - letsencrypt
-
-  - name: Lets Encrypt | Patch Nginx config in {{item.nginx_config}}
-    lineinfile: dest="{{item.nginx_config}}" regexp="^(\s*)\s*location /\.well-known/acme-challenge(.*)" line="    location /.well-known/acme-challenge/ { alias {{le_install_dir}}/.acme-challenges/; }" insertafter="^(\s*)\s*server_name"
+  - name: Lets Encrypt | Patch Nginx config in '{{ item.nginx_config }}'
+    lineinfile: dest="{{ item.nginx_config }}" regexp="^(\s*)\s*location /\.well-known/acme-challenge(.*)" line="    location /.well-known/acme-challenge/ { alias {{ le_install_dir }}/.acme-challenges/; }" insertafter="^(\s*)\s*server_name"
+    with_items: "{{ le_domains | default([]) }}"
     when: item.nginx_config is defined
-    with_items: "{{le_domains | default([])}}"
     become: yes
     tags:
       - letsencrypt
@@ -61,16 +69,28 @@
       - letsencrypt
 
   - name: Lets Encrypt | Nginx | Restart
-    service: name="nginx" state=restarted
+    service:
+      name:  "nginx"
+      state: restarted
     become: yes
     when: nginx_present
     tags:
       - letsencrypt
 
-  - name: Lets Encrypt | Force generate certificates
-    shell: "./letsencrypt.sh --cron --force"
+  - name: Lets Encrypt | Accept licence
+    shell: "./dehydrated --register --accept-terms"
     args:
-      chdir: "{{le_install_dir}}"
+      chdir: "{{ le_install_dir }}"
+    become: yes
+    become_user: le
+    when: option_run_once
+    tags:
+      - letsencrypt
+
+  - name: Lets Encrypt | Force generate certificates
+    shell: "./dehydrated --cron --force"
+    args:
+      chdir: "{{ le_install_dir }}"
     become: yes
     become_user: le
     when: option_run_once
@@ -78,7 +98,11 @@
       - letsencrypt
 
   - name: Lets Encrypt | Setup cron
-    cron: name="lets encrypt crone" minute="0" hour="1" job="/opt/letsencrypt/letsencrypt.sh --cron  > {{le_install_dir}}/cron.log"
+    cron:
+      name:   "lets encrypt cron"
+      minute: "0"
+      hour:   "1"
+      job:    "{{ le_install_dir }}/dehydrated --cron  > {{ le_install_dir }}/cron.log"
     become: yes
     become_user: le
     when: option_setup_cron

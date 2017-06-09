@@ -77,6 +77,16 @@
     tags:
       - letsencrypt
 
+  - name: Lets Encrypt | Accept licence
+    shell: "./dehydrated --register --accept-terms"
+    args:
+      chdir: "{{ le_install_dir }}"
+    become: yes
+    become_user: le
+    when: option_run_once
+    tags:
+      - letsencrypt
+
   - name: Lets Encrypt | Force generate certificates
     shell: "./dehydrated --cron --force"
     args:
